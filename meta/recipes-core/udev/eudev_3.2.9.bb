@@ -61,12 +61,22 @@ do_install_prepend_class-target () {
 	sed -i -e 's:${RECIPE_SYSROOT_NATIVE}::g' \
 		${B}/src/udev/keyboard-keys-from-name.h
 }
+do_install_append_class-native() {
+	# for -native, we only want to install libudev
+	rm -r ${D}${sysconfdir} ${D}${nonarch_base_libdir}/udev ${D}${base_sbindir} ${D}${bindir} ${D}${libexecdir}
+}
+do_install_append_class-nativesdk() {
+	# for -nativesdk, we only want to install libudev
+	rm -r ${D}${sysconfdir} ${D}${nonarch_base_libdir}/udev ${D}${base_sbindir} ${D}${bindir} ${D}${libexecdir}
+}
 
 INITSCRIPT_NAME = "udev"
 INITSCRIPT_PARAMS = "start 04 S ."
 
 PACKAGES =+ "libudev"
 PACKAGES =+ "eudev-hwdb"
+# For nativesdk, we only want to package libudev
+PACKAGES_remove_class-nativesdk = "${PN} eudev-hwdb"
 
 
 FILES_${PN} += "${libexecdir} ${nonarch_base_libdir}/udev ${bindir}/udevadm"
@@ -81,6 +91,7 @@ RDEPENDS_eudev-hwdb += "eudev"
 
 RPROVIDES_${PN} = "hotplug udev"
 RPROVIDES_eudev-hwdb += "udev-hwdb"
+RPROVIDES_libudev_class-nativesdk = "${PN}"
 
 PACKAGE_WRITE_DEPS += "qemu-native"
 pkg_postinst_eudev-hwdb () {
@@ -94,3 +105,5 @@ pkg_postinst_eudev-hwdb () {
 pkg_prerm_eudev-hwdb () {
         rm -f $D${sysconfdir}/udev/hwdb.bin
 }
+
+BBCLASSEXTEND = "native nativesdk"
